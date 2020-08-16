@@ -1,0 +1,720 @@
+﻿@page "/productitemlist"
+
+@inject IProductItemManager productItemManager
+
+@using Newtonsoft.Json
+@using Microsoft.AspNetCore.Components.Web
+@using System.Text.RegularExpressions
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Notifications
+@using Syncfusion.Blazor.Navigations
+
+
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<style>
+    .sort-th {
+        cursor: pointer;
+    }
+
+    .fa {
+        float: right;
+    }
+
+    .btn-custom {
+        color: black;
+        float: left;
+        padding: 8px 16px;
+        text-decoration: none;
+        transition: background-color .3s;
+        border: 2px solid #000;
+        margin: 0px 5px 0px 5px;
+    }
+
+    #toast_default .e-meeting::before {
+        content: "\e705";
+        font-size: 17px;
+    }
+
+    .bootstrap4 #toast_default .e-meeting::before {
+        content: "\e763";
+        font-size: 20px;
+    }
+
+    .e-toast-container .e-toast {
+        background-color: #89F669;
+    }
+
+    .default-tab .e-content .e-item {
+        font-size: 16px;
+        padding: 10px;
+        text-align: justify;
+    }
+
+    @@font-face {
+        font-family: 'Socialicons';
+        src: url(data:application/x-font-ttf;charset=utf-8;base64,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) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    .default-tab .e-tab-icon {
+        font-family: 'Socialicons' !important;
+    }
+
+    .default-tab .e-icons.e-tab-icon {
+        position: relative;
+        top: 1px;
+    }
+
+    .e-twitter:before {
+        content: '\a701';
+    }
+
+    .e-facebook:before {
+        content: '\a705';
+    }
+
+    .e-whatsapp:before {
+        content: '\a700';
+    }
+    /*tr:nth-child(even) {
+        background-color: #F2F2F0;
+    }*/
+</style>
+
+@*<div>
+        <a class="btn btn-primary" href='/addProductItem'>Add</a>
+    </div>*@
+<h3>Product Items</h3>
+<div>This page shows a list of Product Items</div>
+<table class="table" width="100%">
+    <tr>
+        <td align="right" valign="middle" width="80%">
+            Search:
+        </td>
+        <td width="20%">
+            <input type="text" id="txtSearch" style="background-color: #fffee0" placeholder="---Enter here---" class="form-control" @bind="SearchTerm" @bind:event="oninput" onclick="$(this).select()" onfocus="$(this).select()" onchange="$(this).select()" />
+        </td>
+    </tr>
+</table>
+@if (productItemModel == null)
+{
+    @*<p><em>Loading...</em></p>*@
+    <div class="loader">Loading...</div>
+}
+else
+{
+    @*<p><em>Item Details from Barcode scanner</em></p>*@
+    <div class="col-lg-12 control-section">
+        <div class="e-sample-resize-container">
+            <SfTab CssClass="default-tab">
+                <TabAnimationSettings>
+                    <TabAnimationPrevious Effect="None"></TabAnimationPrevious>
+                    <TabAnimationNext Effect="None"></TabAnimationNext>
+                </TabAnimationSettings>
+                <TabItems>
+                    <TabItem>
+                        <HeaderTemplate>Product Barcode</HeaderTemplate>
+                        <ContentTemplate>
+                            <div>Order Details</div>
+                            @*<table class="table table-bordered table-hover">*@
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr bgcolor="#8CD4FF">
+                                        <th class="sort-th" @onclick="@(() => SortTable("Order No"))">
+                                            Order No
+                                            <span class="fa @(SetSortIcon("Order No"))"></span>
+                                        </th>
+                                        <th>Style</th>
+                                        <th>Colour</th>
+                                        <th>PPO Total Qty</th>
+                                        <th>Ordered Units</th>
+                                        <th>Parent ID</th>
+                                        <th>Child ID</th>
+                                        <th>Ind</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (productItemModel == null || productItemModel.Count == 0)
+                                    {
+                                        <tr>
+                                            <td colspan="1">
+                                                <b style="color:firebrick">No Records to display</b>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var item in productItemModel)
+                                        {
+                                            <tr bgcolor="#FFFFF0">
+                                                <td>@item.OrderNo</td>
+                                                <td>@item.Style</td>
+                                                <td>@item.Colour</td>
+                                                <td>@item.PPOQty</td>
+                                                <td>@item.OrderedUnits</td>
+                                                <td>@item.BarParentID</td>
+                                                <td>@item.BarChildID</td>
+                                                @if (@item.StatusID == 1)
+                                                {
+                                                    <td><img src="/images/yes.png" width="20" height="20" /></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><img src="/images/no.png" width="25" height="20" /></td>
+                                                }
+                                                @*<td>
+                                <a class="btn btn-primary" href='/editArticle/@article.ID'>Edit</a>  |
+                                <a class="btn btn-danger" @onclick="() => DeleteArticle(article.ID)">Delete</a>
+                            </td>*@
+                                            </tr>
+                                        }
+                                    }
+
+                                </tbody>
+                            </table>
+                            <div>Summary of Units</div>
+                            <table class="table table-bordered" border="1">
+                                <thead>
+                                    <tr bgcolor="#8CD4FF" style="vertical-align:text-top; text-align:center">
+                                        <th colspan="2">Item Description</th>
+                                        <th colspan="2">Production</th>
+                                        <th colspan="2">Quality Control</th>
+                                        <th colspan="2">Packaging</th>
+                                        <th colspan="2">Distribution</th>
+                                    </tr>
+                                    <tr bgcolor="#FFFFF0" style="vertical-align:text-top; text-align:center">
+                                        <td>Item ID</td>
+                                        <td>Quantity</td>
+                                        <td>Received</td>
+                                        <td>Returned</td>
+                                        <td>Received</td>
+                                        <td>Returned</td>
+                                        <td>Received</td>
+                                        <td>Returned</td>
+                                        <td>Received</td>
+                                        <td>Returned</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (productItemModel == null || productItemModel.Count == 0)
+                                    {
+                                        <tr>
+                                            <td colspan="1">
+                                                <b style="color:firebrick">No Records to display</b>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var item in productItemModel)
+                                        {
+                                            <tr style="vertical-align:text-top; text-align:center">
+                                                <td>@item.BarID &nbsp;</td>
+                                                <td>&#91;@item.ItemSz&nbsp;&#45;&nbsp;<span style="font-weight:bold;color:darkviolet">@item.ItemQty</span>&#93;</td>
+                                                <td style="color:blue;font-weight:bold;font-size:14pt">@item.ProdCount</td>
+                                                <td style="color:red;font-weight:bold;font-size:14pt">
+                                                    @item.ProdCountR
+                                                    @*<a class="btn btn-link" onclick="alert('Hello World')">@item.ProdCountR</a>*@
+                                                </td>
+                                                <td style="color:blue;font-weight:bold;font-size:14pt">@item.QcCount</td>
+                                                <td style="color:red;font-weight:bold;font-size:14pt">@item.QcCountR</td>
+                                                <td style="color:blue;font-weight:bold;font-size:14pt">@item.PkgCount</td>
+                                                <td style="color:red;font-weight:bold;font-size:14pt">@item.PkgCountR</td>
+                                                <td style="color:blue;font-weight:bold;font-size:14pt">@item.DstrCount</td>
+                                                <td style="color:red;font-weight:bold;font-size:14pt">@item.DstrCountR</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            <div>Lapsed Units</div>
+                            <table class="table table-bordered" border="1">
+                                <thead>
+                                    <tr bgcolor="#8CD4FF">
+                                        <th>Nos</th>
+                                        <th>Item ID</th>
+                                        <th>Overdue</th>
+                                        <th>Comments</th>
+                                    </tr>                                    
+                                </thead>
+                                <tbody>
+                                    @if (productItemLapsedModel == null || productItemLapsedModel.Count == 0)
+                                    {
+                                        <tr>
+                                            <td colspan="1">
+                                                <b style="color:firebrick">No Records to display</b>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var itemLps in productItemLapsedModel)
+                                        {
+                                            <tr bgcolor="#FFFFF0">
+                                                <td>@itemLps.Nos</td>
+                                                <td style="color:red;font-weight:bold">@itemLps.BarID</td>
+                                                <td>@itemLps.LapsedDt</td>
+                                                <td>@itemLps.Comments</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </ContentTemplate>
+                    </TabItem>
+                    <TabItem Visible="@IsTabVisible">
+                        <HeaderTemplate>Review Barcode</HeaderTemplate>
+                        <ContentTemplate>
+                            <div class="col-lg-12 control-section toast-default-section">
+                                <SfToast ID="toast_default" @ref="ToastObj" Title="Status" Content="@ToastContent" TimeOut="5000" Icon="e-meeting">
+                                    @*<ToastPosition X="@ToastPosition"></ToastPosition>*@
+                                    <ToastPosition X='Right' Y='Top'></ToastPosition>
+                                </SfToast>
+                            </div>
+                            <div>Change Unit Status</div>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr bgcolor="#8CD4FF">
+                                        <th>Item ID</th>
+                                        <th>Status</th>
+                                        <th>Datetime</th>
+                                        <th>User</th>
+                                        <th>Comments</th>
+                                        <th>Ind</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (productItemModel == null || productItemModel.Count == 0)
+                                    {
+                                        <tr>
+                                            <td colspan="1">
+                                                <b style="color:firebrick">No Records to display</b>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var item in productItemModel)
+                                        {
+                                            <tr bgcolor="#FFFFF0">
+                                                <td>@item.BarID</td>
+                                                <td>
+                                                    <select @ref="myselect" id="myselect" class="form-control" @onchange="selectedValue">
+                                                        <option selected value="-1">Select Status</option>
+                                                        @foreach (var stat in listStatus)
+                                                        {
+                                                            <option value="@stat.ID">@stat.Desc</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td><div>@DateTime.Now</div></td>
+                                                <td>@System.Security.Principal.WindowsIdentity.GetCurrent().Name</td>
+                                                <td>
+                                                    <SfTextBox Placeholder="Enter comments" Input="OnInputTxtComments" @bind-Value="strComments"></SfTextBox>
+                                                </td>
+                                                @if (@item.StatusID == 1)
+                                                {
+                                                    <td><img src="/images/yes.png" width="20" height="20" /></td>
+                                                }
+                                                else
+                                                {
+                                                    <td><img src="/images/no.png" width="25" height="20" /></td>
+                                                }
+                                                <td>
+                                                    @*<SfButton @onclick="OnEditStatusClick" @ref="EditStatus">Submit</SfButton>*@
+                                                    <SfButton CssClass="e-warning" IsPrimary="true" IsToggle="true" @onclick="OnBtnSubmitClick" @ref="BtnSubmit">Submit</SfButton>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            <div>History of Status Description</div>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr bgcolor="#8CD4FF">
+                                        <th>Status</th>
+                                        <th>Factory</th>
+                                        <th>Section</th>
+                                        <th>Trans Date</th>
+                                        <th>Username</th>
+                                        <th>Device</th>
+                                        <th>Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (productItemReviewModel == null || productItemReviewModel.Count == 0)
+                                    {
+                                        <tr>
+                                            <td colspan="1">
+                                                <b style="color:firebrick">No Records to display</b>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var itemRvw in productItemReviewModel)
+                                        {
+                                            <tr bgcolor="#FFFFF0">
+                                                <td>@itemRvw.StatusDesc</td>
+                                                <td>@itemRvw.Factory</td>
+                                                <td>@itemRvw.SectionDesc</td>
+                                                <td>@itemRvw.TransDt</td>
+                                                <td>@itemRvw.UserID</td>
+                                                <td>@itemRvw.DeviceDesc</td>
+                                                <td>@itemRvw.Comments</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </ContentTemplate>
+                    </TabItem>
+                </TabItems>
+            </SfTab>
+        </div>
+    </div>
+
+    @*<div class="pagination">
+                <button class="btn btn-custom" @onclick=@(async ()=>await NavigateToPage("previous"))>Prev</button>
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    var currentPage = i;
+                    <button class="btn btn-custom pagebutton @(currentPage==curPage?"btn-danger":"")" @onclick=@(async () =>await refreshRecords(currentPage))>
+                        @currentPage
+                    </button>
+                }
+
+                <button class="btn btn-custom" @onclick=@(async ()=>await NavigateToPage("next"))>Next</button>
+        </div>*@
+
+    @code
+    {
+
+        private string searchTerm = "", searchTermCleaned = "";
+        private bool blnClean = false;
+
+        private bool IsVisible { get; set; } = true;
+
+        public string Content1 = "", Content2 = "", Content3 = "";
+
+        string strUsr = System.Security.Principal.WindowsIdentity.GetCurrent().Name.ToString();
+
+        public bool IsTabVisible;
+
+        private string SearchTerm
+        {
+            get { return searchTerm; }
+            set
+            {
+                searchTerm = value;
+                FilterRecords();
+            }
+        }
+
+        private string SplitSearchString(string str)
+        {
+            Regex removeLeadingZeroesReg = new Regex(@"^0+(?=\d)");
+
+            string searchEntryTerm = str;
+
+            string[] lstSplitString = searchEntryTerm.Split("-");
+
+            var first = Regex.Replace(removeLeadingZeroesReg.Replace(lstSplitString.FirstOrDefault(), ""), @"\s+", ""); ;
+            var last = Regex.Replace(removeLeadingZeroesReg.Replace(lstSplitString.LastOrDefault(), ""), @"\s+", ""); ;
+
+            if (first.Length > 0 && last.Length > 0)
+            {
+                searchEntryTerm = first.ToString() + '-' + last.ToString();
+
+                blnClean = true;
+            }
+
+            return searchEntryTerm;
+        }
+
+        List<ProductItem> productItemModel;
+        List<ProductItemReview> productItemReviewModel;
+        List<ProductItemLapsed> productItemLapsedModel;
+
+        ProductItem ProductItemEntity = new ProductItem();
+        ProductItemReview ProductItemReviewEntity = new ProductItemReview();
+        ProductItemLapsed ProductItemLapsedEntity = new ProductItemLapsed();
+
+        #region Pagination
+
+        //int totalPages;
+
+        //int curPage;
+        //int pagerSize;
+        //int pageSize;
+        //int startPage;
+        //int endPage;
+        //string sortColumnName = "ID";
+        //string sortDir = "DESC";
+
+        SfToast ToastObj;
+        private string ToastContent = "Updated";
+
+        #endregion
+
+        public class Status
+        {
+            public int ID { get; set; }
+            public string Desc { get; set; }
+        }
+
+        List<Status> listStatus = new List<Status>
+        {
+            new Status() { ID=1, Desc="Approved" },
+            new Status() { ID=2, Desc="Re-Do" },
+            new Status() { ID=3, Desc="Incompleted" },
+            new Status() { ID=4, Desc="Decline" },
+            new Status() { ID=5, Desc="Cancelled" },
+        };
+
+        [Inject] IJSRuntime JSRuntime { get; set; }
+        private ElementReference myselect;
+
+        string barID = "", orderNo = "";
+
+        int intDeviceID = 1, intLocationID = 1;
+
+        protected override async Task OnInitializedAsync()
+        {
+            //display total page buttons
+            //pagerSize = 3;
+            //pageSize = 5;
+            //curPage = 1;
+            //productItemModel = await productItemManager.ListAll((curPage - 1) * pageSize, pageSize, sortColumnName, sortDir, searchTerm);
+
+            string searchTermCleaned = "";
+
+            if (!String.IsNullOrEmpty(searchTerm) && searchTerm.Contains("-"))
+            {
+                int Idx = searchTerm.IndexOf("-");
+
+                string strL = (Idx > 0 ? searchTerm.Substring(0, Idx) : "");
+                string strR = searchTerm.Split('-').Last();
+
+                if (strL.Length > 0 && strR.Length > 0 && strR != "0")
+                { searchTermCleaned = SplitSearchString(searchTerm); }
+            }
+            else { searchTermCleaned = ""; blnClean = false; }
+
+
+            if (searchTermCleaned.Length > 0 && blnClean == true)
+            {
+                productItemModel = await productItemManager.ListAll((1 - 0) * 1, intLocationID, intDeviceID, strUsr, searchTermCleaned);
+
+                //productItemReviewModel = await productItemManager.ListAll(searchTermCleaned);
+
+                barID = productItemModel.Select(x => x.BarID).ToList().FirstOrDefault().ToString();
+                orderNo = productItemModel.Select(x => x.OrderNo).ToList().FirstOrDefault().ToString();
+
+                productItemReviewModel = await productItemManager.ListAll(barID);
+                productItemLapsedModel = await productItemManager.ListAll(barID, orderNo);
+
+                IsTabVisible = true;
+            }
+            else
+            {
+                //productItemModel = await productItemManager.ListAll((1 - 0) * 1, 1, 0, null, null);
+                //productItemReviewModel = await productItemManager.ListAll(null);
+                //productItemLapsedModel = await productItemManager.ListAll(null, null);
+                //productItemModel = null; productItemReviewModel = null;productItemLapsedModel = null;                
+            }
+        }
+
+        //public void SetPagerSize(string direction)
+        //{
+        //    if (direction == "forward" && endPage < totalPages)
+        //    {
+        //        startPage = endPage + 1;
+        //        if (endPage + pagerSize < totalPages)
+        //        {
+        //            endPage = startPage + pagerSize - 1;
+        //        }
+        //        else
+        //        {
+        //            endPage = totalPages;
+        //        }
+        //        this.StateHasChanged();
+        //    }
+        //    else if (direction == "back" && startPage > 1)
+        //    {
+        //        endPage = startPage - 1;
+        //        startPage = startPage - pagerSize;
+        //    }
+        //    else
+        //    {
+        //        startPage = 1;
+        //        endPage = totalPages;
+        //    }
+        //}
+
+        protected async Task DeleteProductItems(int id)
+        {
+            await productItemManager.Delete(id);
+            productItemModel = await productItemManager.ListAll((1 - 1) * 1, intLocationID, intDeviceID, strUsr, searchTermCleaned);
+        }
+
+        private bool isSortedAscending;
+        private string activeSortColumn;
+
+        private async Task<List<ProductItem>> SortRecords(string columnName, string dir)
+        {
+            return await productItemManager.ListAll((1 - 1) * 1, intLocationID, intDeviceID, dir, searchTerm);
+        }
+
+        private async Task SortTable(string columnName)
+        {
+            if (columnName != activeSortColumn)
+            {
+                productItemModel = await SortRecords(columnName, "ASC");
+                isSortedAscending = true;
+                activeSortColumn = columnName;
+            }
+            else
+            {
+                if (isSortedAscending)
+                {
+                    productItemModel = await SortRecords(columnName, "DESC");
+                }
+                else
+                {
+                    productItemModel = await SortRecords(columnName, "ASC");
+                }
+
+                isSortedAscending = !isSortedAscending;
+            }
+            //sortColumnName = columnName;
+            //sortDir = isSortedAscending ? "ASC" : "DESC";
+        }
+
+        private string SetSortIcon(string columnName)
+        {
+            if (activeSortColumn != columnName)
+            {
+                return string.Empty;
+            }
+            if (isSortedAscending)
+            {
+                return "fa-sort-up";
+            }
+            else
+            {
+                return "fa-sort-down";
+            }
+        }
+
+        public async Task refreshRecords(int currentPage)
+        {
+            //productItemModel = await productItemManager.ListAll((currentPage - 1) * pageSize, pageSize, sortColumnName, sortDir, searchTerm);
+            //curPage = currentPage;
+
+            productItemModel = await productItemManager.ListAll((currentPage - 0) * 1, intLocationID, intDeviceID, strUsr, barID);
+
+            productItemReviewModel = await productItemManager.ListAll(barID);
+
+            productItemLapsedModel = await productItemManager.ListAll(barID, orderNo);
+
+            IsTabVisible = true;
+
+            this.StateHasChanged();
+        }
+
+        //public async Task NavigateToPage(string direction)
+        //{
+        //    if (direction == "next")
+        //    {
+        //        if (curPage < totalPages)
+        //        {
+        //            if (curPage == endPage)
+        //            {
+        //                SetPagerSize("forward");
+        //            }
+        //            curPage += 1;
+        //        }
+        //    }
+        //    else if (direction == "previous")
+        //    {
+        //        if (curPage > 1)
+        //        {
+        //            if (curPage == startPage)
+        //            {
+        //                SetPagerSize("back");
+        //            }
+        //            curPage -= 1;
+        //        }
+        //    }
+        //    await refreshRecords(curPage);
+        //}
+
+        public void FilterRecords()
+        {
+            //endPage = 0;
+            this.OnInitializedAsync().Wait();
+        }
+
+        SfButton BtnSubmit;
+
+        public async void OnBtnSubmitClick()
+        {
+            await productItemManager.Insert(barID, int.Parse(SelectedStatusValue), intLocationID, strUsr, intDeviceID, strComments);
+
+            await refreshRecords(1);
+
+            strComments = "";
+            var item = listStatus.Single(item => item.ID == Convert.ToInt32(SelectedStatusValue));
+            //items.Remove(item);
+
+            await this.ToastObj.Show();
+
+            await JSRuntime.InvokeVoidAsync("invokeJsFunctions.selectElement", myselect);
+        }
+
+        string strComments = "";
+
+        public void OnInputTxtComments(InputEventArgs args)
+        {
+            if (args.Value.ToString().Trim().Length > 0)
+            {
+                strComments = args.Value.ToString().Trim();
+            }
+        }
+
+        public string SelectedStatusValue = "";
+
+        public void selectedValue(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+        {
+            SelectedStatusValue = args.Value.ToString();
+        }
+
+        [Parameter]
+        public int Value { get; set; }
+        [Parameter]
+        public EventCallback<int> AnswerEvent { get; set; }
+
+        public void OnClickProdCountR()
+        {
+            AnswerEvent.InvokeAsync(Value);
+        }
+
+        private bool ChangePage(object objectToDisplay)
+        {
+            Console.Write(objectToDisplay.ToString());
+
+            StateHasChanged();
+
+            return false;
+        }
+    }
+}

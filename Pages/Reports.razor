@@ -1,0 +1,61 @@
+﻿@page "/reports"
+
+<h1>Welcome to Reports</h1>
+
+Welcome to your new app.
+
+<table class="table" width="100%">
+    <tr>
+        <td align="right" valign="middle" width="80%">
+            Search:
+        </td>
+        <td width="20%">
+            @*<input type="text" id="txtSearch" style="background-color: #fffee0" placeholder="---Enter here---" class="form-control" @bind="SearchTerm" @bind:event="oninput" onclick="$(this).select()" onfocus="$(this).select()" onchange="$(this).select()" />*@
+        </td>
+    </tr>
+</table>
+@*if (productItemModel == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr bgcolor="#8CD4FF">
+                    <th>Status</th>
+                    <th>Factory</th>
+                    <th>Section</th>
+                    <th>Trans Date</th>
+                    <th>Username</th>
+                    <th>Device</th>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (productItemReviewModel == null || productItemReviewModel.Count == 0)
+                {
+                    <tr>
+                        <td colspan="1">
+                            <b style="color:firebrick">No Records to display</b>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var itemRvw in productItemReviewModel)
+                    {
+                        <tr bgcolor="#FFFFF0">
+                            <td>@itemRvw.StatusDesc</td>
+                            <td>@itemRvw.Factory</td>
+                            <td>@itemRvw.SectionDesc</td>
+                            <td>@itemRvw.TransDt</td>
+                            <td>@itemRvw.UserID</td>
+                            <td>@itemRvw.DeviceDesc</td>
+                            <td>@itemRvw.Comments</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }*@
